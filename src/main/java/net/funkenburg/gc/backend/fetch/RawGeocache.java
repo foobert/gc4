@@ -1,4 +1,4 @@
-package net.funkenburg.gc.backend;
+package net.funkenburg.gc.backend.fetch;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

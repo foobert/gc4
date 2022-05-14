@@ -1,6 +1,8 @@
 package net.funkenburg.gc.backend;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.funkenburg.gc.backend.groundspeak.Geocache;
+import net.funkenburg.gc.backend.groundspeak.Parser;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;

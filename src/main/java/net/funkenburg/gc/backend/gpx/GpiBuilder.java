@@ -1,7 +1,8 @@
-package net.funkenburg.gc.backend;
+package net.funkenburg.gc.backend.gpx;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.funkenburg.gc.backend.groundspeak.GeocacheType;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 

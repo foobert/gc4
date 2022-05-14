@@ -1,4 +1,4 @@
-package net.funkenburg.gc.backend;
+package net.funkenburg.gc.backend.groundspeak.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;

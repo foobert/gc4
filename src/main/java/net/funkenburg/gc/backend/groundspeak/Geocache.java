@@ -1,4 +1,4 @@
-package net.funkenburg.gc.backend;
+package net.funkenburg.gc.backend.groundspeak;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;

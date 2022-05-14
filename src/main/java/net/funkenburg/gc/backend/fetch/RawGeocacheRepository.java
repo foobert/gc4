@@ -1,4 +1,4 @@
-package net.funkenburg.gc.backend;
+package net.funkenburg.gc.backend.fetch;
 
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;

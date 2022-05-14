@@ -1,4 +1,4 @@
-package net.funkenburg.gc.backend;
+package net.funkenburg.gc.backend.groundspeak;
 
 import java.util.HashMap;
 import java.util.Map;

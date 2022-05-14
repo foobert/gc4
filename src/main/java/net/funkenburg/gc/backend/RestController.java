@@ -2,6 +2,11 @@ package net.funkenburg.gc.backend;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.funkenburg.gc.backend.discover.CachingTileProvider;
+import net.funkenburg.gc.backend.geo.Coordinate;
+import net.funkenburg.gc.backend.geo.Tile;
+import net.funkenburg.gc.backend.groundspeak.auth.GroundspeakAccessTokenProvider;
+import net.funkenburg.gc.backend.groundspeak.fetch.ApiFetcher;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,9 +20,9 @@ import java.util.Set;
 @org.springframework.web.bind.annotation.RestController
 public class RestController {
 
-    private final TileRepository tileRepo;
+    private final CachingTileProvider tileRepo;
     private final GroundspeakAccessTokenProvider accessTokenProvider;
-    private final GeocacheLoader loader;
+    private final ApiFetcher loader;
     private final RequestQueue requestQueue;
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)

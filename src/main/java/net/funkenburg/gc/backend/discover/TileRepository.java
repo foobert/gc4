@@ -1,4 +1,4 @@
-package net.funkenburg.gc.backend;
+package net.funkenburg.gc.backend.discover;
 
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -7,11 +7,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
-import java.util.Set;
 
 @Repository
-public interface GeocacheIdRepository extends CrudRepository<GeocacheId, Integer> {
+public interface TileRepository extends CrudRepository<Tile, Integer> {
     @Modifying
-    @Query("INSERT INTO geocache_ids (id, gccodes, ts) VALUES (:id, :gccodes, :ts) ON CONFLICT (id) DO UPDATE SET gccodes = :gccodes, ts = :ts")
+    @Query(
+            "INSERT INTO tiles (id, gccodes, ts) VALUES (:id, :gccodes, :ts) ON CONFLICT (id) DO UPDATE SET gccodes = :gccodes, ts = :ts")
     void update(@Param("id") int quadkey, @Param("gccodes") String[] gcCodes, Instant ts);
 }

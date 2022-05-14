@@ -1,4 +1,4 @@
-package net.funkenburg.gc.backend;
+package net.funkenburg.gc.backend.groundspeak.auth;
 
 @FunctionalInterface
 public interface GroundspeakAccessTokenProvider {

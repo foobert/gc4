@@ -4,6 +4,8 @@ import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import net.funkenburg.gc.backend.geo.Tile;
+import net.funkenburg.gc.backend.groundspeak.GeocacheType;
 
 import java.util.HashMap;
 import java.util.Locale;

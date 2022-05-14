@@ -1,8 +1,11 @@
-package net.funkenburg.gc.backend;
+package net.funkenburg.gc.backend.groundspeak.discover;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.funkenburg.gc.backend.discover.TileProvider;
+import net.funkenburg.gc.backend.geo.Tile;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -21,13 +24,14 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class Discover implements GeocacheIdProvider {
+@Qualifier("groundspeak")
+public class Discover implements TileProvider {
 
     private final RestTemplate restTemplate;
     private final DiscoverUrlProvider urlProvider;
 
     @Override
-    public Set<String> fetchTile(Tile tile) {
+    public Set<String> getGcCodes(Tile tile) {
         log.info("Loading GC codes for {}", tile);
         String baseUrl = urlProvider.get();
         fetchTilePng(tile, baseUrl);

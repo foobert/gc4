@@ -3,18 +3,25 @@ package net.funkenburg.gc.backend;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.funkenburg.gc.backend.discover.TileProvider;
+import net.funkenburg.gc.backend.fetch.GeocacheProvider;
+import net.funkenburg.gc.backend.fetch.RawGeocache;
+import net.funkenburg.gc.backend.geo.Tile;
+import net.funkenburg.gc.backend.gpx.GpiBuilder;
+import net.funkenburg.gc.backend.gpx.GpxBuilder;
+import net.funkenburg.gc.backend.groundspeak.Geocache;
+import net.funkenburg.gc.backend.groundspeak.GeocacheType;
+import net.funkenburg.gc.backend.groundspeak.Parser;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.DelayQueue;
@@ -28,8 +35,8 @@ import java.util.concurrent.TimeUnit;
 public class RequestQueue {
     private final ExecutorService executorService;
 
-    private final TileRepository tileRepo;
-    private final GeocacheRepository geocacheRepository;
+    private final TileProvider tiles;
+    private final GeocacheProvider geocaches;
     private final Parser parser;
     private final GpiBuilder gpiBuilder;
 
@@ -70,17 +77,16 @@ public class RequestQueue {
                 () -> {
                     try {
                         request.setStatus("discover");
-                        Set<String> allGcCodes = new HashSet<>();
+                        var gcCodes = new HashSet<String>();
                         for (Tile tile : request.getTiles()) {
-                            Collection<String> gcCodes = tileRepo.lookupGeocacheIds(tile);
-                            allGcCodes.addAll(gcCodes);
+                            gcCodes.addAll(tiles.getGcCodes(tile));
                         }
+
                         request.setStatus("fetch");
-                        Set<RawGeocache> rawGeocaches =
-                                geocacheRepository.lookupGeocaches(allGcCodes);
+                        var rawGeocaches = geocaches.getRawGeocaches(gcCodes);
 
                         request.setStatus("gpx");
-                        List<GeocacheType> interestingTypes =
+                        var interestingTypes =
                                 List.of(
                                         GeocacheType.TRADITIONAL,
                                         GeocacheType.MULTI,

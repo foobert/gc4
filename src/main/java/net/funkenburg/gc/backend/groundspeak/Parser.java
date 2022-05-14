@@ -1,4 +1,4 @@
-package net.funkenburg.gc.backend;
+package net.funkenburg.gc.backend.groundspeak;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,7 +16,7 @@ public class Parser {
         try {
             return objectMapper.readValue(raw, Geocache.class);
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            log.error("Unable to parse geocache", e);
             return null;
         }
     }

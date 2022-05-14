@@ -1,4 +1,4 @@
-package net.funkenburg.gc.backend;
+package net.funkenburg.gc.backend.groundspeak.fetch;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -9,6 +9,10 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.funkenburg.gc.backend.fetch.GeocacheProvider;
+import net.funkenburg.gc.backend.fetch.RawGeocache;
+import net.funkenburg.gc.backend.groundspeak.Geocache;
+import net.funkenburg.gc.backend.groundspeak.auth.GroundspeakAccessTokenProvider;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -16,21 +20,45 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class GeocacheLoader {
+public class ApiFetcher implements GeocacheProvider {
     public static final int BATCH_SIZE = 50;
     private final RestTemplate restTemplate;
     private final GroundspeakAccessTokenProvider accessTokenProvider;
     private final ObjectMapper objectMapper;
 
-    public Map<String, String> fetch(String[] gcCodes) throws JsonProcessingException {
+    @Override
+    public Set<RawGeocache> getRawGeocaches(Collection<String> gcCodes) {
+        try {
+            var ts = Instant.now();
+            return fetch(gcCodes.toArray(String[]::new)).entrySet().stream()
+                    .map(
+                            e -> {
+                                RawGeocache raw = new RawGeocache();
+                                raw.setId(e.getKey());
+                                raw.setRaw(e.getValue());
+                                raw.setTimestamp(ts);
+                                return raw;
+                            })
+                    .collect(Collectors.toSet());
+        } catch (JsonProcessingException e) {
+            log.error("JSON error", e);
+            return Collections.emptySet();
+        }
+    }
+
+    private Map<String, String> fetch(String[] gcCodes) throws JsonProcessingException {
         var result = new HashMap<String, String>();
         for (int i = 0; i < gcCodes.length; i += BATCH_SIZE) {
             String[] chunk =

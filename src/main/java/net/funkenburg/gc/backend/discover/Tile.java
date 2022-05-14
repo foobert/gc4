@@ -1,32 +1,25 @@
-package net.funkenburg.gc.backend;
+package net.funkenburg.gc.backend.discover;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.Transient;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.Instant;
 
-
-@Table("geocache_ids")
+@Table("tiles")
 @Data
 @AllArgsConstructor
 @RequiredArgsConstructor
-public class GeocacheId {
+public class Tile {
     @Id
-//    @GeneratedValue(generator = "quadkey")
-//    @GenericGenerator(name = "quadkey", strategy = "com.example.demo.QuadkeyIdGenerator")
     @Column("id")
     private Integer id;
 
-    @Transient
-    private Tile tile;
-
     @Column("gccodes")
-    private String[] geocacheIds;
+    private String[] gcCodes;
 
     @Column("ts")
     private Instant timestamp;

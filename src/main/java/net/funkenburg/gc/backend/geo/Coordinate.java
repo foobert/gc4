@@ -1,4 +1,4 @@
-package net.funkenburg.gc.backend;
+package net.funkenburg.gc.backend.geo;
 
 public record Coordinate(double lat, double lon) {
     private static final int EARTH_RADIUS = 6371000; // radius of earth in meters

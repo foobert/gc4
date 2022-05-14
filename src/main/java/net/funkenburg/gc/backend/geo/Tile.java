@@ -1,4 +1,4 @@
-package net.funkenburg.gc.backend;
+package net.funkenburg.gc.backend.geo;
 
 import java.util.ArrayList;
 import java.util.List;

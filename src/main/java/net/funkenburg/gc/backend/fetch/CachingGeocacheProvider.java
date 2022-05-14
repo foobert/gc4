@@ -1,8 +1,8 @@
-package net.funkenburg.gc.backend;
+package net.funkenburg.gc.backend.fetch;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -10,7 +10,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -18,12 +17,14 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class GeocacheRepository {
-    private final GeocacheLoader loader;
+@Primary
+public class CachingGeocacheProvider implements GeocacheProvider {
+    private final GeocacheProvider delegate;
 
-    private final RawGeocacheRepository rawGeocacheRepository;
+    private final RawGeocacheRepository repo;
 
-    public Set<RawGeocache> lookupGeocaches(Collection<String> gcCodes) {
+    @Override
+    public Set<RawGeocache> getRawGeocaches(Collection<String> gcCodes) {
         var result = new HashSet<RawGeocache>(gcCodes.size());
         var timestamp = Instant.now();
         var cutoff = timestamp.minus(48, ChronoUnit.HOURS);
@@ -49,32 +50,19 @@ public class GeocacheRepository {
             }
         }
 
-        try {
-            String[] codes = needFetch.toArray(String[]::new);
-            Map<String, String> raw = loader.fetch(codes);
-            for (var entry : raw.entrySet()) {
-                rawGeocacheRepository.update(entry.getKey(), entry.getValue(), timestamp);
-                var rawGeocache = new RawGeocache();
-                rawGeocache.setRaw(entry.getValue());
-                rawGeocache.setId(entry.getKey());
-                rawGeocache.setTimestamp(timestamp);
-                result.add(rawGeocache);
-            }
-        } catch (JsonProcessingException e) {
-            log.error("lookupGeocaches", e);
-            return Collections.emptySet();
+        Set<RawGeocache> rawGeocaches = delegate.getRawGeocaches(needFetch);
+        for (var entry : rawGeocaches) {
+            repo.update(entry.getId(), entry.getRawString(), entry.getTimestamp());
+            result.add(entry);
         }
         return result;
     }
 
     private Instant getTimestamp(String gcCode) {
-        return rawGeocacheRepository
-                .findById(gcCode)
-                .map(RawGeocache::getTimestamp)
-                .orElse(Instant.MIN);
+        return repo.findById(gcCode).map(RawGeocache::getTimestamp).orElse(Instant.MIN);
     }
 
     private Optional<RawGeocache> loadFromDb(String gcCode) {
-        return rawGeocacheRepository.findById(gcCode);
+        return repo.findById(gcCode);
     }
 }

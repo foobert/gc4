@@ -1,9 +1,9 @@
-package net.funkenburg.gc.backend;
+package net.funkenburg.gc.backend.groundspeak.discover;
 
+import net.funkenburg.gc.backend.groundspeak.discover.DiscoverUrlProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.Random;
-
 
 @Service
 public class GroundspeakDiscoverUrlProvider implements DiscoverUrlProvider {
