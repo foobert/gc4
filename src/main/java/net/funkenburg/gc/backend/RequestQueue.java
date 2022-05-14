@@ -1,0 +1,134 @@
+package net.funkenburg.gc.backend;
+
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.DelayQueue;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class RequestQueue {
+    private final ExecutorService executorService;
+
+    private final TileRepository tileRepo;
+    private final GeocacheRepository geocacheRepository;
+    private final Parser parser;
+    private final GpiBuilder gpiBuilder;
+
+    private final ConcurrentMap<String, OngoingRequest> requests = new ConcurrentHashMap<>();
+    private final DelayQueue<DelayedRequestId> timeout = new DelayQueue<>();
+
+    @Data
+    private static class DelayedRequestId implements Delayed {
+        private final String requestId;
+        private final Instant cutoff;
+
+        private DelayedRequestId(String requestId, Instant cutoff) {
+            this.requestId = requestId;
+            this.cutoff = cutoff;
+        }
+
+        public static DelayedRequestId of(OngoingRequest request) {
+            return new DelayedRequestId(request.getId(), Instant.now().plus(1, ChronoUnit.HOURS));
+        }
+
+        @Override
+        public long getDelay(TimeUnit unit) {
+            return Duration.between(Instant.now(), cutoff).get(ChronoUnit.SECONDS);
+        }
+
+        @Override
+        public int compareTo(Delayed o) {
+            return Long.compare(getDelay(TimeUnit.NANOSECONDS), o.getDelay(TimeUnit.NANOSECONDS));
+        }
+    }
+
+    public void enqueue(OngoingRequest request) {
+        cleanup();
+        timeout.add(DelayedRequestId.of(request));
+        requests.put(request.getId(), request);
+        request.setStatus("queued");
+        this.executorService.submit(
+                () -> {
+                    try {
+                        request.setStatus("discover");
+                        Set<String> allGcCodes = new HashSet<>();
+                        for (Tile tile : request.getTiles()) {
+                            Collection<String> gcCodes = tileRepo.lookupGeocacheIds(tile);
+                            allGcCodes.addAll(gcCodes);
+                        }
+                        request.setStatus("fetch");
+                        Set<RawGeocache> rawGeocaches =
+                                geocacheRepository.lookupGeocaches(allGcCodes);
+
+                        request.setStatus("gpx");
+                        List<GeocacheType> interestingTypes =
+                                List.of(
+                                        GeocacheType.TRADITIONAL,
+                                        GeocacheType.MULTI,
+                                        GeocacheType.EARTH);
+                        Map<GeocacheType, GpxBuilder> builders = new HashMap<>();
+                        for (var type : interestingTypes) {
+                            builders.put(type, new GpxBuilder());
+                        }
+
+                        for (RawGeocache raw : rawGeocaches) {
+                            Geocache geocache = parser.parse(raw.getRawString());
+                            if (geocache.isPremium()
+                                    || geocache.isArchived()
+                                    || geocache.isLocked()
+                                    || !geocache.isPublished()) {
+                                log.debug("Skip {}", geocache.getCode());
+                                continue;
+                            }
+                            GpxBuilder gpxBuilder = builders.get(geocache.getGeocacheType());
+                            if (gpxBuilder != null) {
+                                gpxBuilder.add(geocache);
+                            }
+                        }
+
+                        request.setStatus("gpi");
+                        for (var gpx : builders.entrySet()) {
+                            gpx.getValue().close();
+                            byte[] gpi =
+                                    gpiBuilder.convert(gpx.getValue().getOutput(), gpx.getKey());
+                            request.addResult(gpx.getKey(), gpi);
+                        }
+
+                        request.setStatus("done");
+                    } catch (Exception e) {
+                        log.error("Error processing queue", e);
+                    }
+                });
+    }
+
+    private void cleanup() {
+        DelayedRequestId id;
+        while ((id = timeout.poll()) != null) {
+            log.info("Timeout {}", id.requestId);
+            requests.remove(id.requestId);
+        }
+    }
+
+    public Optional<OngoingRequest> lookup(String id) {
+        return Optional.ofNullable(requests.get(id));
+    }
+}
