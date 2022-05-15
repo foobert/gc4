@@ -1,15 +1,15 @@
 package net.funkenburg.gc.backend.groundspeak;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
 
-@Getter
-@Builder
-@Jacksonized
+@Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy.class)
 public class Geocache {
@@ -57,6 +57,7 @@ public class Geocache {
         private String geocacheTypeName;
     }
 
+    @JsonIgnore
     public GeocacheType getGeocacheType() {
         return GeocacheType.of(cacheType.getGeocacheTypeId());
     }

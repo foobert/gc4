@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.funkenburg.gc.backend.fetch.GeocacheProvider;
 import net.funkenburg.gc.backend.fetch.RawGeocache;
-import net.funkenburg.gc.backend.groundspeak.Geocache;
+import net.funkenburg.gc.backend.groundspeak.PremiumGeocache;
 import net.funkenburg.gc.backend.groundspeak.auth.GroundspeakAccessTokenProvider;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -75,9 +75,9 @@ public class ApiFetcher implements GeocacheProvider {
     private String createHackyPremium(String gcCode) {
         try {
             log.debug("Hack premium geocache: {}", gcCode);
-            return objectMapper.writeValueAsString(
-                    Geocache.builder().code(gcCode).isPremium(true).build());
+            return objectMapper.writeValueAsString(new PremiumGeocache(gcCode));
         } catch (JsonProcessingException e) {
+            log.error("Unable to create premium geocache", e);
             return null;
         }
     }
