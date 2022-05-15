@@ -1,7 +1,7 @@
 package net.funkenburg.gc.backend.geo;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public record Tile(int x, int y, int z) {
     private static final int DEFAULT_ZOOM = 12;
@@ -49,7 +49,7 @@ public record Tile(int x, int y, int z) {
         return new Tile(xtile, ytile, zoom);
     }
 
-    public static List<Tile> near(Coordinate coordinate, double radius) {
+    public static Set<Tile> near(Coordinate coordinate, double radius) {
         // as a first approximation, use a square instead of a circle
         var topLeft = coordinate.move(radius, 315);
         var bottomRight = coordinate.move(radius, 135);
@@ -57,7 +57,7 @@ public record Tile(int x, int y, int z) {
         var topLeftTile = Tile.fromCoordinates(topLeft);
         var bottomRightTile = Tile.fromCoordinates(bottomRight);
 
-        var result = new ArrayList<Tile>();
+        var result = new HashSet<Tile>();
         for (int x = topLeftTile.x; x <= bottomRightTile.x; x++) {
             for (int y = topLeftTile.y; y <= bottomRightTile.y; y++) {
                 result.add(new Tile(x, y, topLeftTile.z));

@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -24,7 +25,7 @@ public class CachingTileProvider implements TileProvider {
 
     @Override
     public Set<String> getGcCodes(net.funkenburg.gc.backend.geo.Tile tile) {
-        var cutoff = Instant.now().minusSeconds(300);
+        var cutoff = Instant.now().minus(48, ChronoUnit.HOURS);
         var ts = getTimestamp(tile);
         if (ts.isBefore(cutoff)) {
             Set<String> strings = delegate.getGcCodes(tile);
