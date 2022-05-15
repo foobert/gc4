@@ -19,11 +19,13 @@ public class OngoingRequest {
     private final String id = NanoIdUtils.randomNanoId();
     private final Set<Tile> tiles;
     private final Map<String, byte[]> result = new HashMap<>();
-    @Builder.Default private String status = "created";
 
-    public void setStatus(String status) {
-        log.info("{}: {} -> {}", id, this.status, status);
-        this.status = status;
+    @Builder.Default private String detail = "created";
+    @Builder.Default private RequestState state = RequestState.CREATED;
+
+    public void setDetail(String detail) {
+        log.info("{}: {} -> {}", id, this.detail, detail);
+        this.detail = detail;
     }
 
     public void addResult(GeocacheType type, byte[] gpi) {

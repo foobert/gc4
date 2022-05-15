@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +43,10 @@ public class RequestQueue {
 
     private final ConcurrentMap<String, OngoingRequest> requests = new ConcurrentHashMap<>();
     private final DelayQueue<DelayedRequestId> timeout = new DelayQueue<>();
+
+    public Collection<String> getIds() {
+        return requests.keySet();
+    }
 
     @Data
     private static class DelayedRequestId implements Delayed {
@@ -72,20 +77,21 @@ public class RequestQueue {
         cleanup();
         timeout.add(DelayedRequestId.of(request));
         requests.put(request.getId(), request);
-        request.setStatus("queued");
+        request.setDetail("queued");
         this.executorService.submit(
                 () -> {
                     try {
-                        request.setStatus("discover");
+                        request.setState(RequestState.PROCESSING);
+                        request.setDetail("discover");
                         var gcCodes = new HashSet<String>();
                         for (Tile tile : request.getTiles()) {
                             gcCodes.addAll(tiles.getGcCodes(tile));
                         }
 
-                        request.setStatus("fetch");
+                        request.setDetail("fetch");
                         var rawGeocaches = geocaches.getRawGeocaches(gcCodes);
 
-                        request.setStatus("gpx");
+                        request.setDetail("gpx");
                         var interestingTypes =
                                 List.of(
                                         GeocacheType.TRADITIONAL,
@@ -111,7 +117,7 @@ public class RequestQueue {
                             }
                         }
 
-                        request.setStatus("gpi");
+                        request.setDetail("gpi");
                         for (var gpx : builders.entrySet()) {
                             gpx.getValue().close();
                             byte[] gpi =
@@ -119,7 +125,8 @@ public class RequestQueue {
                             request.addResult(gpx.getKey(), gpi);
                         }
 
-                        request.setStatus("done");
+                        request.setDetail("done");
+                        request.setState(RequestState.DONE);
                     } catch (Exception e) {
                         log.error("Error processing queue", e);
                     }

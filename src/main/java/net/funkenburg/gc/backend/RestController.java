@@ -36,12 +36,12 @@ public class RestController {
         return request.getId();
     }
 
-    @GetMapping("/status")
+    @GetMapping("/rest/status")
     public String status(@RequestParam String id) {
-        return requestQueue.lookup(id).map(OngoingRequest::getStatus).orElse("not found");
+        return requestQueue.lookup(id).map(OngoingRequest::getDetail).orElse("not found");
     }
 
-    @GetMapping(value = "/gpi", produces = "xml/gpx")
+    @GetMapping(value = "/rest/gpi", produces = "xml/gpx")
     public String output(@RequestParam String id) {
         return "TODO";
         //        return requestQueue.lookup(id).map(OngoingRequest::getOutput).orElse("");

@@ -26,7 +26,7 @@ public class CachingTileProvider implements TileProvider {
     public Set<String> getGcCodes(net.funkenburg.gc.backend.geo.Tile tile) {
         var cutoff = Instant.now().minusSeconds(300);
         var ts = getTimestamp(tile);
-        if (false && ts.isBefore(cutoff)) {
+        if (ts.isBefore(cutoff)) {
             Set<String> strings = delegate.getGcCodes(tile);
             save(tile, strings);
             return strings;
