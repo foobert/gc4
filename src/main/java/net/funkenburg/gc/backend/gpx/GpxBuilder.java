@@ -71,18 +71,18 @@ public class GpxBuilder implements AutoCloseable {
             return geocache.getCode().substring(2);
         }
 
-        private String size() {
-            return "?";
+        private String type() {
+            return geocache.getGeocacheType().name().substring(0, 1).toUpperCase(Locale.ENGLISH);
         }
 
         private String skill() {
             return geocache.getDifficulty() + "/" + geocache.getTerrain();
         }
 
-        private String type() {
+        private String size() {
             return geocache.getContainerType()
                     .getContainerTypeName()
-                    .substring(1, 1)
+                    .substring(0, 1)
                     .toUpperCase(Locale.ENGLISH);
         }
 
