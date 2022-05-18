@@ -4,7 +4,6 @@ spring:
     username: postgres
     initialization-mode: always
 
-
 logging:
   level:
     org.springframework:
@@ -16,3 +15,6 @@ groundspeak:
   consumer_key: ...
   username: ...
   password: ...
+
+gpsbabel:
+  args: gpsbabel -i gpx -f input.gpx -o garmin_gpi,bitmap=image.bmp,sleep=1 -F output.gpi
