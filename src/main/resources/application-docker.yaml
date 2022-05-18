@@ -1,3 +1,4 @@
 spring:
   datasource:
-    url: jdbc:postgresql://host.docker.internal:5432/gc
+    url: jdbc:postgresql://db:5432/gc
+    password: gc
