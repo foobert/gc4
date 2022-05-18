@@ -2,11 +2,13 @@ package net.funkenburg.gc.backend.gpx;
 
 import lombok.extern.slf4j.Slf4j;
 import net.funkenburg.gc.backend.groundspeak.GeocacheType;
+import org.apache.tomcat.util.http.fileupload.util.Streams;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
@@ -31,10 +33,9 @@ public class GpiBuilder {
     public byte[] convert(String gpx, GeocacheType type) throws IOException {
         Path workspace = Files.createTempDirectory("gpi");
         try {
-            Path bitmapPath = getBitmap(type);
+            copyBitmap(type, workspace.resolve("image.bmp").toAbsolutePath());
             Path inputPath = workspace.resolve("input.gpx").toAbsolutePath();
             Path outputPath = workspace.resolve("output.gpi").toAbsolutePath();
-            Files.copy(bitmapPath, workspace.resolve("image.bmp"));
             Files.writeString(inputPath, gpx);
             var gpsbabel =
                     new ProcessBuilder(gpsBabelArgs.split(" "))
@@ -62,12 +63,17 @@ public class GpiBuilder {
         }
     }
 
-    private Path getBitmap(GeocacheType type) throws IOException {
-        return resourceLoader
-                .getResource("classpath:gpi/" + type.name().toLowerCase(Locale.ROOT) + ".bmp")
-                .getFile()
-                .toPath()
-                .toAbsolutePath();
+    private void copyBitmap(GeocacheType type, Path output) throws IOException {
+        try (var is =
+                        resourceLoader
+                                .getResource(
+                                        "classpath:gpi/"
+                                                + type.name().toLowerCase(Locale.ROOT)
+                                                + ".bmp")
+                                .getInputStream();
+                var os = new FileOutputStream(output.toFile())) {
+            Streams.copy(is, os, true);
+        }
     }
 
     private void deleteDirectory(Path path) {
