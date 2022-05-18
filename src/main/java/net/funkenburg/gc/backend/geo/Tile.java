@@ -39,14 +39,14 @@ public record Tile(int x, int y, int z) {
         double lon = coordinate.lon();
         double latRad = lat * Math.PI / 180;
         double n = Math.pow(2, zoom);
-        int xtile = (int)((lon + 180.0) / 360.0 * n);
-        int ytile =
+        int x = (int) ((lon + 180.0) / 360.0 * n);
+        int y =
                 (int)
                         (
                                 (1.0 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI)
                                         / 2.0
                                         * n);
-        return new Tile(xtile, ytile, zoom);
+        return new Tile(x, y, zoom);
     }
 
     public static Set<Tile> near(Coordinate coordinate, double radius) {
