@@ -2,6 +2,7 @@ package net.funkenburg.gc.backend.groundspeak;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Builder;
@@ -22,8 +23,13 @@ public class Geocache {
 
     private boolean archived;
 
+    @JsonProperty("IsLocked")
     private boolean isLocked;
+
+    @JsonProperty("IsPremium")
     private boolean isPremium;
+
+    @JsonProperty("IsPublished")
     private boolean isPublished;
 
     private double latitude;
