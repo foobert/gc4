@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class RequestForm {
     private String location;
-    private int distance;
+    private int distance = 10000;
 }
