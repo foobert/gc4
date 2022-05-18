@@ -15,6 +15,8 @@ public class GpxBuilder implements AutoCloseable {
     private final ByteArrayOutputStream stream;
     private final OutputStreamWriter writer;
 
+    private int count;
+
     public GpxBuilder() throws IOException {
         this.stream = new ByteArrayOutputStream();
         this.writer = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
@@ -47,6 +49,8 @@ public class GpxBuilder implements AutoCloseable {
         writer.write("<type>Geocache</type>");
         writer.write("</wpt>");
         writer.write("\n");
+
+        count++;
     }
 
     @Override
@@ -57,6 +61,10 @@ public class GpxBuilder implements AutoCloseable {
 
     public String getOutput() {
         return stream.toString(StandardCharsets.UTF_8);
+    }
+
+    public int getCount() {
+        return count;
     }
 
     @RequiredArgsConstructor

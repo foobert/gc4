@@ -18,7 +18,7 @@ import java.util.Set;
 public class OngoingRequest {
     private final String id = NanoIdUtils.randomNanoId();
     private final Set<Tile> tiles;
-    private final Map<String, byte[]> result = new HashMap<>();
+    private final Map<String, Result> results = new HashMap<>();
 
     @Builder.Default private String detail = "created";
     @Builder.Default private RequestState state = RequestState.CREATED;
@@ -28,7 +28,7 @@ public class OngoingRequest {
         this.detail = detail;
     }
 
-    public void addResult(GeocacheType type, byte[] gpi) {
-        result.put(type.name().toLowerCase(Locale.ROOT), gpi);
+    public void addResult(GeocacheType type, Result result) {
+        results.put(type.name().toLowerCase(Locale.ROOT), result);
     }
 }

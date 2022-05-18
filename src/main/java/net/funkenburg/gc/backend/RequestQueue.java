@@ -17,18 +17,8 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.DelayQueue;
-import java.util.concurrent.Delayed;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 
 @Service
 @RequiredArgsConstructor
@@ -122,7 +112,13 @@ public class RequestQueue {
                             gpx.getValue().close();
                             byte[] gpi =
                                     gpiBuilder.convert(gpx.getValue().getOutput(), gpx.getKey());
-                            request.addResult(gpx.getKey(), gpi);
+                            var result =
+                                    Result.builder()
+                                            .gpi(gpi)
+                                            .gpx(gpx.getValue().getOutput())
+                                            .count(gpx.getValue().getCount())
+                                            .build();
+                            request.addResult(gpx.getKey(), result);
                         }
 
                         request.setDetail("done");

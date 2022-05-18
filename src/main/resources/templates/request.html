@@ -3,13 +3,36 @@
 <head>
     <title>Getting Started: Serving Web Content</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <script>
+        function setCurrentLocation() {
+            if (!navigator.geolocation) {
+                return;
+            }
+            navigator.geolocation.getCurrentPosition((pos) => {
+                let field = document.getElementById("location");
+                field.value = pos.coords.latitude + " " + pos.coords.longitude;
+            }, () => {
+                alert("Geolocation failed");
+            });
+        }
+    </script>
 </head>
-<body>
-<p th:text="'Hello, ' + ${name} + '!'"/>
+<body onload="setCurrentLocation()">
+<h1>New Request</h1>
 
 <form th:action="@{/request}" th:object="${requestForm}" method="post">
-    <input type="text" th:field="*{location}"/>
-    <input type="submit" value="Submit"/>
+    <p>
+        <label for="location">Location</label>
+        <input id="location" type="text" th:field="*{location}"/>
+        <button onclick="setCurrentLocation(); return false;">Here</button>
+    </p>
+    <p>
+        <label for="distance">Distance</label>
+        <input type="text" id="distance" th:field="*{distance}" value="10000"/>
+    </p>
+    <p>
+        <input type="submit" value="Submit"/>
+    </p>
 </form>
 
 </body>

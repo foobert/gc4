@@ -4,12 +4,11 @@
     <title>Getting Started: Serving Web Content</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <script th:inline="javascript" th:if="${request.state != T(net.funkenburg.gc.backend.RequestState).DONE}">
-    /*[+
-        setTimeout(function() {
-        window.location = [[@{/status(id=${request.id})}]];
-        }, 5000);
-    +]*/
-
+        /*[+
+            setTimeout(function() {
+            window.location = [[@{/status(id=${request.id})}]];
+            }, 5000);
+        +]*/
 
 
     </script>
@@ -19,10 +18,11 @@
 <p th:text="${request.state}"/>
 <p th:text="${request.detail}"/>
 <ul>
-    <li th:each="entry : ${request.result}">
-        <a th:href="@{/gpi(id=${requestId}, type=${entry.key})}" th:download="${entry.key} + '.gpi'">
-            <span th:text="${entry.key}"/>
-        </a>
+    <li th:each="entry : ${request.results}">
+        <span th:text="${entry.key}"/>,
+        Count: <span th:text="${entry.value.count}"/>
+        <a th:href="@{/gpi(id=${requestId}, type=${entry.key})}" th:download="${entry.key} + '.gpi'">gpi</a>,
+        <a th:href="@{/gpx(id=${requestId}, type=${entry.key})}" th:download="${entry.key} + '.gpx'">gpx</a>
     </li>
 </ul>
 </body>

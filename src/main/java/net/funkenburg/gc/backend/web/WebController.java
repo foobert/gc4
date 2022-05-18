@@ -8,14 +8,9 @@ import net.funkenburg.gc.backend.geo.Coordinate;
 import net.funkenburg.gc.backend.geo.Tile;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
-import java.util.Set;
 
 @Controller
 @Slf4j
@@ -35,10 +30,21 @@ public class WebController {
     @PostMapping("/request")
     public String postRequest(@ModelAttribute RequestForm requestForm, Model model) {
         log.info("Request {}", requestForm.getLocation());
-        //        var fake = new Coordinate(51.33702374516727, 12.372297128375628);
-        var fake = extractLocation(requestForm);
-        var tile = Tile.fromCoordinates(fake);
-        var request = OngoingRequest.builder().tiles(Set.of(tile)).build();
+        var center = extractLocation(requestForm);
+        var tiles = Tile.near(center, requestForm.getDistance());
+        /*
+        var topLeft = Tile.fromCoordinates(new Coordinate(39.9880353137982, 2.2585241721318727));
+        var bottomRight =
+                Tile.fromCoordinates(new Coordinate(39.23773940219697, 3.5091854391187147));
+        var tiles = new HashSet<Tile>();
+        for (int x = topLeft.x(); x <= bottomRight.x(); x++) {
+            for (int y = topLeft.y(); y <= bottomRight.y(); y++) {
+                tiles.add(new Tile(x, y, topLeft.z()));
+            }
+        }
+        */
+
+        var request = OngoingRequest.builder().tiles(tiles).build();
         requestQueue.enqueue(request);
 
         model.addAttribute("requestId", request.getId());
@@ -68,6 +74,21 @@ public class WebController {
         return "status";
     }
 
+    @GetMapping(value = "/gpx", produces = "application/gpx")
+    @ResponseBody
+    public String getGpx(
+            @RequestParam(name = "id") String id, @RequestParam(name = "type") String type) {
+        Optional<OngoingRequest> lookup = requestQueue.lookup(id);
+        if (lookup.isEmpty()) {
+            throw new RuntimeException("boom");
+        }
+        var result = lookup.get().getResults().get(type);
+        if (result == null) {
+            throw new RuntimeException("boom");
+        }
+        return result.getGpx();
+    }
+
     @GetMapping(value = "/gpi", produces = "application/gpi")
     @ResponseBody
     public byte[] getGpi(
@@ -76,10 +97,10 @@ public class WebController {
         if (lookup.isEmpty()) {
             throw new RuntimeException("boom");
         }
-        byte[] gpi = lookup.get().getResult().get(type);
-        if (gpi == null) {
+        var result = lookup.get().getResults().get(type);
+        if (result == null) {
             throw new RuntimeException("boom");
         }
-        return gpi;
+        return result.getGpi();
     }
 }
