@@ -4,10 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import net.funkenburg.gc.backend.fetch.GeocacheProvider;
 import net.funkenburg.gc.backend.fetch.RawGeocache;
@@ -21,13 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -39,25 +32,11 @@ public class ApiFetcher implements GeocacheProvider {
     private final ObjectMapper objectMapper;
 
     @Override
-    public Set<RawGeocache> getRawGeocaches(Collection<String> gcCodes) {
-        try {
-            var ts = Instant.now();
-            return fetch(gcCodes.toArray(String[]::new)).entrySet().stream()
-                    .map(
-                            e -> {
-                                RawGeocache raw = new RawGeocache();
-                                raw.setId(e.getKey());
-                                raw.setRaw(e.getValue());
-                                raw.setTimestamp(ts);
-                                return raw;
-                            })
-                    .collect(Collectors.toSet());
-        } catch (JsonProcessingException e) {
-            log.error("JSON error", e);
-            return Collections.emptySet();
-        }
+    public Stream<RawGeocache> getRawGeocaches(Collection<String> gcCodes) {
+        return chunk(gcCodes.stream(), BATCH_SIZE).flatMap(this::fetchBatch);
     }
 
+    /*
     private Map<String, String> fetch(String[] gcCodes) throws JsonProcessingException {
         var result = new HashMap<String, String>();
         for (int i = 0; i < gcCodes.length; i += BATCH_SIZE) {
@@ -71,6 +50,7 @@ public class ApiFetcher implements GeocacheProvider {
         }
         return result;
     }
+     */
 
     private String createHackyPremium(String gcCode) {
         try {
@@ -82,7 +62,9 @@ public class ApiFetcher implements GeocacheProvider {
         }
     }
 
-    public Map<String, String> fetchBatch(String[] gcCodes) throws JsonProcessingException {
+    @SneakyThrows
+    public Stream<RawGeocache> fetchBatch(List<String> gcCodes) {
+        var ts = Instant.now();
         var headers = new HttpHeaders();
         headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
         headers.set("Content-Type", MediaType.APPLICATION_JSON_VALUE);
@@ -90,7 +72,10 @@ public class ApiFetcher implements GeocacheProvider {
         var requestBody =
                 RequestBody.builder()
                         .accessToken(accessTokenProvider.get())
-                        .cacheCode(RequestBody.CacheCode.builder().cacheCodes(gcCodes).build())
+                        .cacheCode(
+                                RequestBody.CacheCode.builder()
+                                        .cacheCodes(gcCodes.toArray(String[]::new))
+                                        .build())
                         .build();
         var entity = new HttpEntity<>(objectMapper.writeValueAsString(requestBody), headers);
 
@@ -101,7 +86,40 @@ public class ApiFetcher implements GeocacheProvider {
                 "fetch: {} - {}",
                 response.getStatusCode(),
                 response.getBody().getStatus().getStatusCode());
-        return response.getBody().getRawResponse();
+        Map<String, String> rawResponse = response.getBody().getRawResponse();
+
+        return gcCodes.stream()
+                .map(
+                        gcCode -> {
+                            String s = rawResponse.get(gcCode);
+                            if (s == null) {
+                                s = createHackyPremium(gcCode);
+                            }
+                            RawGeocache raw = new RawGeocache();
+                            raw.setId(gcCode);
+                            raw.setRaw(s);
+                            raw.setTimestamp(ts);
+                            return raw;
+                        });
+    }
+
+    private <T> Stream<List<T>> chunk(Stream<T> stream, int size) {
+        Iterator<T> iterator = stream.iterator();
+        Iterator<List<T>> listIterator =
+                new Iterator<>() {
+                    public boolean hasNext() {
+                        return iterator.hasNext();
+                    }
+
+                    public List<T> next() {
+                        List<T> result = new ArrayList<>(size);
+                        for (int i = 0; i < size && iterator.hasNext(); i++) {
+                            result.add(iterator.next());
+                        }
+                        return result;
+                    }
+                };
+        return StreamSupport.stream(((Iterable<List<T>>) () -> listIterator).spliterator(), false);
     }
 
     @Builder

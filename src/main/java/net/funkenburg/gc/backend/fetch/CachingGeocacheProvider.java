@@ -11,8 +11,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +24,7 @@ public class CachingGeocacheProvider implements GeocacheProvider {
     private final RawGeocacheRepository repo;
 
     @Override
-    public Set<RawGeocache> getRawGeocaches(Collection<String> gcCodes) {
+    public Stream<RawGeocache> getRawGeocaches(Collection<String> gcCodes) {
         var result = new HashSet<RawGeocache>(gcCodes.size());
         var timestamp = Instant.now();
         var cutoff = timestamp.minus(48, ChronoUnit.HOURS);
@@ -50,12 +50,14 @@ public class CachingGeocacheProvider implements GeocacheProvider {
             }
         }
 
-        Set<RawGeocache> rawGeocaches = delegate.getRawGeocaches(needFetch);
-        for (var entry : rawGeocaches) {
-            repo.update(entry.getId(), entry.getRawString(), entry.getTimestamp());
-            result.add(entry);
-        }
-        return result;
+        Stream<RawGeocache> rawGeocaches = delegate.getRawGeocaches(needFetch);
+        rawGeocaches.forEach(
+                entry -> {
+                    log.info("Updated {}", entry.getId());
+                    repo.update(entry.getId(), entry.getRawString(), entry.getTimestamp());
+                    result.add(entry);
+                });
+        return result.stream();
     }
 
     private Instant getTimestamp(String gcCode) {

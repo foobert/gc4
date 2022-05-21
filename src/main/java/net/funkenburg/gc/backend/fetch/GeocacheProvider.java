@@ -1,8 +1,8 @@
 package net.funkenburg.gc.backend.fetch;
 
 import java.util.Collection;
-import java.util.Set;
+import java.util.stream.Stream;
 
 public interface GeocacheProvider {
-    Set<RawGeocache> getRawGeocaches(Collection<String> gcCodes);
+    Stream<RawGeocache> getRawGeocaches(Collection<String> gcCodes);
 }

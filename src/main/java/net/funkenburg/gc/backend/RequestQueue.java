@@ -5,15 +5,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.funkenburg.gc.backend.discover.TileProvider;
 import net.funkenburg.gc.backend.fetch.GeocacheProvider;
-import net.funkenburg.gc.backend.fetch.RawGeocache;
 import net.funkenburg.gc.backend.geo.Tile;
 import net.funkenburg.gc.backend.gpx.GpiBuilder;
 import net.funkenburg.gc.backend.gpx.GpxBuilder;
-import net.funkenburg.gc.backend.groundspeak.Geocache;
 import net.funkenburg.gc.backend.groundspeak.GeocacheType;
 import net.funkenburg.gc.backend.groundspeak.Parser;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -92,20 +91,26 @@ public class RequestQueue {
                             builders.put(type, new GpxBuilder());
                         }
 
-                        for (RawGeocache raw : rawGeocaches) {
-                            Geocache geocache = parser.parse(raw.getRawString());
-                            if (geocache.isPremium()
-                                    || geocache.isArchived()
-                                    || geocache.isLocked()
-                                    || !geocache.isPublished()) {
-                                log.debug("Skip {}", geocache.getCode());
-                                continue;
-                            }
-                            GpxBuilder gpxBuilder = builders.get(geocache.getGeocacheType());
-                            if (gpxBuilder != null) {
-                                gpxBuilder.add(geocache);
-                            }
-                        }
+                        rawGeocaches
+                                .map(raw -> (parser).parse(raw.getRawString()))
+                                .filter(
+                                        geocache ->
+                                                !geocache.isPremium()
+                                                        && !geocache.isArchived()
+                                                        && !geocache.isLocked()
+                                                        && geocache.isPublished())
+                                .forEach(
+                                        geocache -> {
+                                            GpxBuilder gpxBuilder =
+                                                    builders.get(geocache.getGeocacheType());
+                                            if (gpxBuilder != null) {
+                                                try {
+                                                    gpxBuilder.add(geocache);
+                                                } catch (IOException e) {
+                                                    throw new RuntimeException(e);
+                                                }
+                                            }
+                                        });
 
                         request.setDetail("gpi");
                         for (var gpx : builders.entrySet()) {
