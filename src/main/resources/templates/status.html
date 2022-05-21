@@ -19,6 +19,12 @@
 <p th:text="${request.state}"/>
 <p th:text="${request.detail}"/>
 <ul>
+    <li th:each="entry: ${request.getProgress()}">
+        <span th:text="${entry.value.name}"/>: <span th:text="${entry.value.current}"/>/<span
+            th:text="${entry.value.total}"/>
+    </li>
+</ul>
+<ul>
     <li th:each="entry : ${request.results}">
         <span th:text="${entry.key}"/>,
         Count: <span th:text="${entry.value.count}"/>

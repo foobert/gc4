@@ -19,6 +19,7 @@ public class OngoingRequest {
     private final String id = NanoIdUtils.randomNanoId();
     private final Set<Tile> tiles;
     private final Map<String, Result> results = new HashMap<>();
+    private final Map<String, RequestProgress> progress = new HashMap<>();
 
     @Builder.Default private String detail = "created";
     @Builder.Default private RequestState state = RequestState.CREATED;
@@ -30,5 +31,9 @@ public class OngoingRequest {
 
     public void addResult(GeocacheType type, Result result) {
         results.put(type.name().toLowerCase(Locale.ROOT), result);
+    }
+
+    public void progress(String action, int current, int total) {
+        progress.compute(action, (key, prev) -> new RequestProgress(key, current, total));
     }
 }

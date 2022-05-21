@@ -18,6 +18,10 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -73,12 +77,24 @@ public class RequestQueue {
                         request.setState(RequestState.PROCESSING);
                         request.setDetail("discover");
                         var gcCodes = new HashSet<String>();
-                        for (Tile tile : request.getTiles()) {
-                            gcCodes.addAll(tiles.getGcCodes(tile));
+                        AtomicInteger tileProgress = new AtomicInteger(0);
+                        Set<Tile> tiles = request.getTiles();
+                        for (Tile tile : tiles) {
+                            request.progress("tiles", tileProgress.incrementAndGet(), tiles.size());
+                            gcCodes.addAll(this.tiles.getGcCodes(tile));
                         }
 
                         request.setDetail("fetch");
-                        var rawGeocaches = geocaches.getRawGeocaches(gcCodes);
+                        AtomicInteger fetchProgress = new AtomicInteger();
+                        var rawGeocaches =
+                                observe(
+                                        geocaches.getRawGeocaches(gcCodes),
+                                        raw -> {
+                                            request.progress(
+                                                    "fetch",
+                                                    fetchProgress.incrementAndGet(),
+                                                    gcCodes.size());
+                                        });
 
                         request.setDetail("gpx");
                         var interestingTypes =
@@ -140,6 +156,23 @@ public class RequestQueue {
             log.info("Timeout {}", id.requestId);
             requests.remove(id.requestId);
         }
+    }
+
+    private <T> Stream<T> observe(Stream<T> stream, Consumer<T> observer) {
+        Iterator<T> iterator = stream.iterator();
+        Iterator<T> resultIterator =
+                new Iterator<>() {
+                    public boolean hasNext() {
+                        return iterator.hasNext();
+                    }
+
+                    public T next() {
+                        T next = iterator.next();
+                        observer.accept(next);
+                        return next;
+                    }
+                };
+        return StreamSupport.stream(((Iterable<T>) () -> resultIterator).spliterator(), false);
     }
 
     public Optional<OngoingRequest> lookup(String id) {
