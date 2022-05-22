@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashSet;
 import java.util.Optional;
 
 @Controller
@@ -32,17 +33,28 @@ public class WebController {
         log.info("Request {}", requestForm.getLocation());
         var center = extractLocation(requestForm);
         var tiles = Tile.near(center, requestForm.getDistance());
-        /*
+        var request = OngoingRequest.builder().tiles(tiles).build();
+        requestQueue.enqueue(request);
+
+        model.addAttribute("requestId", request.getId());
+        model.addAttribute("status", request.getDetail());
+        model.addAttribute("request", request);
+
+        return "status";
+    }
+
+    @GetMapping("/mallorca")
+    public String mallorca(Model model) {
+        log.info("Request mallorca");
+
         var topLeft = Tile.fromCoordinates(new Coordinate(39.9880353137982, 2.2585241721318727));
-        var bottomRight =
-                Tile.fromCoordinates(new Coordinate(39.23773940219697, 3.5091854391187147));
+        var bottomRight = Tile.fromCoordinates(new Coordinate(39.23773940219697, 3.5091854391187147));
         var tiles = new HashSet<Tile>();
         for (int x = topLeft.x(); x <= bottomRight.x(); x++) {
             for (int y = topLeft.y(); y <= bottomRight.y(); y++) {
                 tiles.add(new Tile(x, y, topLeft.z()));
             }
         }
-        */
 
         var request = OngoingRequest.builder().tiles(tiles).build();
         requestQueue.enqueue(request);
