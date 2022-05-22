@@ -1,6 +1,5 @@
 package net.funkenburg.gc.backend.gpx;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.funkenburg.gc.backend.groundspeak.Geocache;
 
@@ -8,7 +7,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.Locale;
 
 @Slf4j
 public class GpxBuilder implements AutoCloseable {
@@ -30,12 +28,7 @@ public class GpxBuilder implements AutoCloseable {
     }
 
     public void add(Geocache geocache) throws IOException {
-        //        log.info(
-        //                "GPX: {} {}/{}",
-        //                geocache.getCode(),
-        //                geocache.getDifficulty(),
-        //                geocache.getTerrain());
-        var clean = new CleanView(geocache);
+        var clean = new StringCleaner(geocache);
 
         writer.write(
                 "<wpt lat=\""
@@ -65,63 +58,5 @@ public class GpxBuilder implements AutoCloseable {
 
     public int getCount() {
         return count;
-    }
-
-    @RequiredArgsConstructor
-    private static class CleanView {
-        private final Geocache geocache;
-
-        public String title() {
-            return code() + " " + size() + type() + " " + skill();
-        }
-
-        private String code() {
-            return geocache.getCode().substring(2);
-        }
-
-        private String type() {
-            return geocache.getGeocacheType().name().substring(0, 1).toUpperCase(Locale.ENGLISH);
-        }
-
-        private String skill() {
-            return geocache.getDifficulty() + "/" + geocache.getTerrain();
-        }
-
-        private String size() {
-            return geocache.getContainerType()
-                    .getContainerTypeName()
-                    .substring(0, 1)
-                    .toUpperCase(Locale.ENGLISH);
-        }
-
-        private String hint() {
-            return clean(geocache.getHint());
-        }
-
-        private String clean(String data) {
-            if (data == null) {
-                return "";
-            }
-            return data.replaceAll("ä", "ae")
-                    .replaceAll("ö", "oe")
-                    .replaceAll("ü", "ue")
-                    .replaceAll("Ä", "AE")
-                    .replaceAll("Ö", "OE")
-                    .replaceAll("Ü", "UE")
-                    .replaceAll("ß", "ss")
-                    .replaceAll(" {2,}", " ")
-                    .replaceAll("[^a-zA-Z0-9;:?!,.-=_/@$%*+()<> |\n]", "")
-                    .trim();
-        }
-
-        public String description() {
-            var hint = hint();
-            var description = code() + " " + name() + (hint.length() > 0 ? "\n" : "") + hint;
-            return description.substring(0, Math.min(100, description.length()));
-        }
-
-        private String name() {
-            return clean(geocache.getName());
-        }
     }
 }
