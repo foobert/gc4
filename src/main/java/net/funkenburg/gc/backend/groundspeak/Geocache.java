@@ -38,7 +38,7 @@ public class Geocache {
     private String shortDescription;
     private String longDescription;
 
-    private String hint;
+    private String encodedHints;
 
     private ContainerType containerType;
     private CacheType cacheType;
