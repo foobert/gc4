@@ -45,6 +45,10 @@ public class GpiBuilder {
             gpsbabel.waitFor();
             logOutput(gpsbabel);
             log.info("gpsbabel exit value {}", gpsbabel.exitValue());
+            if (gpsbabel.exitValue() != 0) {
+                throw new IOException(
+                        "gpsbabel exited with non-zero exit code " + gpsbabel.exitValue());
+            }
             return Files.readAllBytes(outputPath);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

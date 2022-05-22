@@ -146,6 +146,7 @@ public class RequestQueue {
                         request.setState(RequestState.DONE);
                     } catch (Exception e) {
                         log.error("Error processing queue", e);
+                        request.setException(e);
                     }
                 });
     }

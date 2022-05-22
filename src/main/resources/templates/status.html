@@ -18,6 +18,7 @@
 <a th:href="@{/status(id=${request.id})}"><p th:text="${request.id}"/></a>
 <p th:text="${request.state}"/>
 <p th:text="${request.detail}"/>
+<p th:text="${request.exception}" th:if="${request.exception != null}"/>
 <ul>
     <li th:each="entry: ${request.getProgress()}">
         <span th:text="${entry.value.name}"/>: <span th:text="${entry.value.current}"/>/<span

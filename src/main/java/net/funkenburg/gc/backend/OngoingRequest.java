@@ -20,6 +20,7 @@ public class OngoingRequest {
     private final Set<Tile> tiles;
     private final Map<String, Result> results = new HashMap<>();
     private final Map<String, RequestProgress> progress = new HashMap<>();
+    private Exception exception;
 
     @Builder.Default private String detail = "created";
     @Builder.Default private RequestState state = RequestState.CREATED;
@@ -35,5 +36,11 @@ public class OngoingRequest {
 
     public void progress(String action, int current, int total) {
         progress.compute(action, (key, prev) -> new RequestProgress(key, current, total));
+    }
+
+    public void setException(Exception e) {
+        this.exception = e;
+        setDetail("exception");
+        setState(RequestState.DONE);
     }
 }
